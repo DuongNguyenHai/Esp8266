@@ -1,14 +1,14 @@
 // Nguyen Hai Duong
 // Dec 10 2016
 
-// Feauture :
-// 1. Auto reconnect connection
+// Feature :
+// 1. Auto reconnect connection (its default of Library)
 //    In case the connection is lost, ESP8266 will automatically reconnect to the last used access point, once it is again available. (its default of ESP8266 Station)
 // 2. Set static IP
 // 3. Create a server use UDP protocol
 //
 // Library : ESP8266 as Arduino
-// Program was modified from example of ESP8266 (https://github.com/esp8266/Arduino/blob/master/doc/esp8266wifi/udp-examples.md)
+// Program was modified from example of ESP8266 Library (https://github.com/esp8266/Arduino/blob/master/doc/esp8266wifi/udp-examples.md)
 // Reference :
 // https://github.com/esp8266/Arduino/blob/master/doc/esp8266wifi/readme.md#quick-start
 
