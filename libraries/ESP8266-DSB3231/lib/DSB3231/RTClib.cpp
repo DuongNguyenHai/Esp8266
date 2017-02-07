@@ -1,6 +1,3 @@
-// Code by JeeLabs http://news.jeelabs.org/code/
-// Released to the public domain! Enjoy!
-
 #include "RTClib.h"
 #ifdef __AVR__
  #include <avr/pgmspace.h>
@@ -231,22 +228,9 @@ TimeSpan TimeSpan::operator-(const TimeSpan& right) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// RTC_Millis implementation
-
-long RTC_Millis::offset = 0;
-
-void RTC_Millis::adjust(const DateTime& dt) {
-    offset = dt.unixtime() - millis() / 1000;
-}
-
-DateTime RTC_Millis::now() {
-  return (uint32_t)(offset + millis() / 1000);
-}
-
-////////////////////////////////////////////////////////////////////////////////
 // RTC_DS3231 implementation
 
-boolean RTC_DS3231::begin(void) {
+bool RTC_DS3231::begin() {
    #if defined(ESP8266)
    Wire.begin(ESP8266_SDA, ESP8266_SCL);
    #else
@@ -293,14 +277,6 @@ DateTime RTC_DS3231::now() {
   return DateTime (y, m, d, hh, mm, ss);
 }
 
-bool RTC_DS3231::getTimeString(char *s) {
-   DateTime tm = now();
-   if(tm.unixtime()==RCT_WRONG)
-      return false;
-   snprintf (s, 22, "[%d/%d/%dT%d:%d:%d]", tm.year(), tm.month(), tm.day(), tm.hour(), tm.minute(), tm.second());
-   return true;
-}
-
 Ds3231SqwPinMode RTC_DS3231::readSqwPinMode() {
   int mode;
 
@@ -334,6 +310,7 @@ uint8_t RTC_DS3231::readRegControl() {
 }
 
 bool RTC_DS3231::setAlarm(uint8_t alarm) {
+   clearFlag(alarm);
    uint8_t ctrl = read_i2c_register(DS3231_ADDRESS, DS3231_CONTROL);
    ctrl |= 0x04;  // turn on INTCN
    ctrl |= alarm;  // set bit alarm
@@ -433,6 +410,22 @@ alarm_t RTC_DS3231::readAlarmTime(uint8_t alarm) {
    return tm;
 }
 
+bool RTC_DS3231::getDateTimeString(char *s) {
+   DateTime tm = now();
+   if(tm.unixtime()==RCT_WRONG)
+      return false;
+   snprintf (s, 22, "%d/%d/%dT%d:%s%d:%s%d", tm.year(), tm.month(), tm.day(), tm.hour(), ((tm.minute() > 9) ? "": "0"), tm.minute(), ((tm.second() > 9) ? "": "0"), tm.second());
+   return true;
+}
+
+bool RTC_DS3231::getTimeString(char *s) {
+   DateTime tm = now();
+   if(tm.unixtime()==RCT_WRONG)
+      return false;
+   snprintf (s, 10, "%d:%s%d:%s%d", tm.hour(), ((tm.minute() > 9) ? "": "0"), tm.minute(), ((tm.second() > 9) ? "": "0"), tm.second());
+   return true;
+}
+
 uint8_t RTC_DS3231::readRegStatus() {
    return read_i2c_register(DS3231_ADDRESS, DS3231_STATUSREG);
 }
@@ -455,7 +448,6 @@ bool RTC_DS3231::clearFlag(uint8_t alarm) {
       regStatus &= ~0x03;
    else
       regStatus &= ~alarm;
-
    write_i2c_register(DS3231_ADDRESS, DS3231_STATUSREG, regStatus);
    return true;
 }

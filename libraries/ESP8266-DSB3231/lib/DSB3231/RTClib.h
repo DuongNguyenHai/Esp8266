@@ -1,7 +1,9 @@
-// Modifier : Nguyen Hai Duong
+// Author : Nguyen Hai Duong
 // Jan 7 2017
-// Code by JeeLabs http://news.jeelabs.org/code/
+// Part of library by JeeLabs http://news.jeelabs.org/code/
 // Released to the public domain! Enjoy!
+
+// Modify date : Feb 6 2017
 
 #ifndef _RTCLIB_H_
 #define _RTCLIB_H_
@@ -26,7 +28,7 @@ const uint8_t alarm_addr[2] = {0x07,0x0B};
 #define ESP8266_SCL 14        // esp8266 ver7
 #endif
 
-// This is define for globe use. The other file should just use this define below
+// This is define for public domain. The other file should just use it
 #define ALARM_1 DS3231_ALARM_1
 #define ALARM_2 DS3231_ALARM_2
 #define RTC RTC_DS3231
@@ -93,11 +95,12 @@ enum Ds3231SqwPinMode { DS3231_OFF = 0x01, DS3231_SquareWave1Hz = 0x00, DS3231_S
 class RTC_DS3231 {
 
 public:
-   boolean begin(void);                      // setup I2C
+   bool begin();                      // setup I2C
    static void adjust(const DateTime& dt);   // set time to RTC
    bool lostPower(void);                     // check time of RTC was set or alarmt.
    static DateTime now();                    // get time from RTC
-   bool getTimeString(char *s);      // get time and convert it to string. Time format ISO 8601 : yyyy:mm:ddThh:mm:ss
+   bool getDateTimeString(char *s);      // get time + date and convert it to string. Time format ISO 8601 : yyyy:mm:ddThh:mm:ss
+   bool getTimeString(char *s);          // get time and convert it to string. Time format ISO 8601 hh:mm:ss
    static Ds3231SqwPinMode readSqwPinMode(); // read square wave in SQW pin
    static void writeSqwPinMode(Ds3231SqwPinMode mode);   // write mode to SQW pin (there are 5 modes)
    bool setAlarm(uint8_t alarm);         // turn on alarm, there are 2 alarms. uint8_t alarm = 1 or 2 (alarm 1 or 2)
@@ -116,24 +119,12 @@ public:
    bool clearFlag(uint8_t alarm=0);       // clear flag of alarm. default = 0 means clear all flags.
    bool isFlagSet(uint8_t alarm);         // check flag is set or not
    alarm_t readAlarmTime(uint8_t alarm);  // read time has set for alarm
+
+private:
    uint8_t readRegControl();              // read control register
    uint8_t readRegStatus();               // read status register
    uint8_t readRegister(uint8_t reg);     // read reg register
 
-private:
-
-};
-
-// RTC using the internal millis() clock, has to be initialized before use
-// NOTE: this clock won't be correct once the millis() timer rolls over (>49d?)
-class RTC_Millis {
-public:
-    static void begin(const DateTime& dt) { adjust(dt); }
-    static void adjust(const DateTime& dt);
-    static DateTime now();
-
-protected:
-    static long offset;
 };
 
 #endif // _RTCLIB_H_
