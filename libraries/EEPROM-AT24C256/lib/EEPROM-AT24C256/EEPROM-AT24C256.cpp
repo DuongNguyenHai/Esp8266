@@ -74,7 +74,6 @@ unsigned int EPROM_AT24C256::read(unsigned int addr, char *s, unsigned char leng
    char c = read(addr);
    if (c==-1 || c==0) return 0;
    *s++ = c;
-   Serial.print(c);
    for (unsigned char i = 1; i < length; i++) {
       c = readCurrentAddr();
       if (c==-1 || c==0) break;
@@ -193,9 +192,15 @@ unsigned int EPROM_AT24C256::readNumber(unsigned int addr, unsigned char &num) {
 }
 
 unsigned int EPROM_AT24C256::readNumber(unsigned int addr, int &num) {
-   char b[INT];
-   unsigned int addr_af = readBytes(addr, b, INT);
-   memcpy(&num, b, sizeof(b));
+   data_int dt;
+	dt.num = 0;
+	unsigned int addr_af = readBytes(addr, dt.b, INT);
+	num = dt.num;
+	// return n;
+   Serial.printf("dt.num: %d\n", dt.num);
+   // char b[INT];
+   // unsigned int addr_af = readBytes(addr, b, INT);
+   // memcpy(&num, b, sizeof(b));
    return addr_af;
 }
 

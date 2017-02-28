@@ -1,24 +1,9 @@
-/* 
+/*
   FSWebServer - Example WebServer with SPIFFS backend for esp8266
-  Copyright (c) 2015 Hristo Gochkov. All rights reserved.
-  This file is part of the ESP8266WebServer library for Arduino environment.
- 
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-  
   upload the contents of the data folder with MkSPIFFS Tool ("ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE)
   or you can upload the contents of a folder if you CD in that folder and run the following command:
   for file in `ls -A1`; do curl -F "file=@$PWD/$file" esp8266fs.local/edit; done
-  
+
   access the sample web page at http://esp8266fs.local
   edit the page by going to http://esp8266fs.local/edit
 */
@@ -28,11 +13,14 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 
-#define DBG_OUTPUT_PORT Serial
-
 const char* ssid = "Song He";
 const char* password = "nuocchaydamdam";
-const char* host = "esp8266fs";
+const char* host = "aquaos";
+
+// use three define below to check what action
+#define SET_TIME "date"
+#define SET_LIGHT "lightOnFrom"
+#define SET_MEASURE "temptMeasure"
 
 ESP8266WebServer server(80);
 //holds the current upload
@@ -69,7 +57,7 @@ String getContentType(String filename){
 }
 
 bool handleFileRead(String path){
-  DBG_OUTPUT_PORT.println("handleFileRead: " + path);
+  Serial.println("handleFileRead: " + path);
   if(path.endsWith("/")) path += "index.htm";
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
@@ -81,6 +69,7 @@ bool handleFileRead(String path){
     file.close();
     return true;
   }
+  Serial.println("return false");
   return false;
 }
 
@@ -90,24 +79,24 @@ void handleFileUpload(){
   if(upload.status == UPLOAD_FILE_START){
     String filename = upload.filename;
     if(!filename.startsWith("/")) filename = "/"+filename;
-    DBG_OUTPUT_PORT.print("handleFileUpload Name: "); DBG_OUTPUT_PORT.println(filename);
+    Serial.print("handleFileUpload Name: "); Serial.println(filename);
     fsUploadFile = SPIFFS.open(filename, "w");
     filename = String();
   } else if(upload.status == UPLOAD_FILE_WRITE){
-    //DBG_OUTPUT_PORT.print("handleFileUpload Data: "); DBG_OUTPUT_PORT.println(upload.currentSize);
+    //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
     if(fsUploadFile)
       fsUploadFile.write(upload.buf, upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END){
     if(fsUploadFile)
       fsUploadFile.close();
-    DBG_OUTPUT_PORT.print("handleFileUpload Size: "); DBG_OUTPUT_PORT.println(upload.totalSize);
+    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
   }
 }
 
 void handleFileDelete(){
   if(server.args() == 0) return server.send(500, "text/plain", "BAD ARGS");
   String path = server.arg(0);
-  DBG_OUTPUT_PORT.println("handleFileDelete: " + path);
+  Serial.println("handleFileDelete: " + path);
   if(path == "/")
     return server.send(500, "text/plain", "BAD PATH");
   if(!SPIFFS.exists(path))
@@ -121,7 +110,7 @@ void handleFileCreate(){
   if(server.args() == 0)
     return server.send(500, "text/plain", "BAD ARGS");
   String path = server.arg(0);
-  DBG_OUTPUT_PORT.println("handleFileCreate: " + path);
+  Serial.println("handleFileCreate: " + path);
   if(path == "/")
     return server.send(500, "text/plain", "BAD PATH");
   if(SPIFFS.exists(path))
@@ -137,9 +126,9 @@ void handleFileCreate(){
 
 void handleFileList() {
   if(!server.hasArg("dir")) {server.send(500, "text/plain", "BAD ARGS"); return;}
-  
+
   String path = server.arg("dir");
-  DBG_OUTPUT_PORT.println("handleFileList: " + path);
+  Serial.println("handleFileList: " + path);
   Dir dir = SPIFFS.openDir(path);
   path = String();
 
@@ -155,47 +144,47 @@ void handleFileList() {
     output += "\"}";
     entry.close();
   }
-  
+
   output += "]";
   server.send(200, "text/json", output);
 }
 
 void setup(void){
-  DBG_OUTPUT_PORT.begin(115200);
-  DBG_OUTPUT_PORT.print("\n");
-  DBG_OUTPUT_PORT.setDebugOutput(true);
+  Serial.begin(115200);
+  Serial.print("\n");
+  Serial.setDebugOutput(true);
   SPIFFS.begin();
   {
     Dir dir = SPIFFS.openDir("/");
-    while (dir.next()) {    
+    while (dir.next()) {
       String fileName = dir.fileName();
       size_t fileSize = dir.fileSize();
-      DBG_OUTPUT_PORT.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
+      Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
     }
-    DBG_OUTPUT_PORT.printf("\n");
+    Serial.printf("\n");
   }
-  
+
 
   //WIFI INIT
-  DBG_OUTPUT_PORT.printf("Connecting to %s\n", ssid);
+  Serial.printf("Connecting to %s\n", ssid);
   if (String(WiFi.SSID()) != String(ssid)) {
     WiFi.begin(ssid, password);
   }
-  
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    DBG_OUTPUT_PORT.print(".");
+    Serial.print(".");
   }
-  DBG_OUTPUT_PORT.println("");
-  DBG_OUTPUT_PORT.print("Connected! IP address: ");
-  DBG_OUTPUT_PORT.println(WiFi.localIP());
+  Serial.println("");
+  Serial.print("Connected! IP address: ");
+  Serial.println(WiFi.localIP());
 
   MDNS.begin(host);
-  DBG_OUTPUT_PORT.print("Open http://");
-  DBG_OUTPUT_PORT.print(host);
-  DBG_OUTPUT_PORT.println(".local/edit to see the file browser");
-  
-  
+  Serial.print("Open http://");
+  Serial.print(host);
+  Serial.println(".local/edit to see the file browser");
+
+
   //SERVER INIT
   //list directory
   server.on("/list", HTTP_GET, handleFileList);
@@ -210,6 +199,29 @@ void setup(void){
   //first callback is called after the request has ended with all parsed arguments
   //second callback handles file uploads at that location
   server.on("/edit", HTTP_POST, [](){ server.send(200, "text/plain", ""); }, handleFileUpload);
+
+  server.on("/set", HTTP_POST, []() {
+    Serial.println("POST request from browser: arg0=" + server.arg(0));
+    // if(server.hasArg()) {
+    //   Serial.println("Has args:" + server.arg(0));
+    // }else {
+    //   Serial.println("There is no arg:");
+    // }
+    if(server.hasArg(SET_TIME)) {
+      Serial.println("set time: " + server.arg(0));
+      server.send(200, "text/plain", "S;Hệ thống đã cập nhật giờ");
+    }
+    else if(server.hasArg(SET_LIGHT)) {
+      Serial.println("set light: " + server.arg(0) + "-" + server.arg(1));
+      server.send(200, "text/plain", "S;Đã thiết lập khoảng thời gian bật đèn");
+    }
+    else if(server.hasArg(SET_MEASURE)) {
+      Serial.println("set measure schedule: " + server.arg(0));
+      server.send(200, "text/plain", "S;Đã thiết lập khung giờ đo nhiệt độ");
+    }
+
+
+  });
 
   //called when the url is not defined here
   //use it to load content from SPIFFS
@@ -229,10 +241,10 @@ void setup(void){
     json = String();
   });
   server.begin();
-  DBG_OUTPUT_PORT.println("HTTP server started");
+  Serial.println("HTTP server started");
 
 }
- 
+
 void loop(void){
   server.handleClient();
 }

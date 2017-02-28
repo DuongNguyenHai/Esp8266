@@ -36,6 +36,11 @@
 
 #define EEPROM EPROM_AT24C256
 
+union data_int {
+   char b[4];
+   int num;
+};
+
 class EPROM_AT24C256 {
 
 public:

@@ -35,8 +35,8 @@
 #include <ESP8266WebServer.h>
 
 /* Set these to your desired credentials. */
-const char *ssid = "ESPap";
-const char *password = "thereisnospoon";
+const char *ssid = "Song He";
+const char *password = "nuocchaydamdam";
 
 ESP8266WebServer server(80);
 
